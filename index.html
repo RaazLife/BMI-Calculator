@@ -169,141 +169,200 @@
         <li>Obese: &gt;= 30</li>
       </ul>
     </div>
-  </div>
 
-  <script>
-    let bmiChart = null;
+    <script>
+      let bmiChart = null;
 
-    document.getElementById("bmiForm").addEventListener("submit", function(event) {
-      event.preventDefault();
+      document.getElementById("bmiForm").addEventListener("submit", function(event) {
+        event.preventDefault();
 
-      const weightInput = document.getElementById("weight");
-      const heightInput = document.getElementById("height");
-      const ageInput = document.getElementById("age");
-      const genderSelect = document.getElementById("gender");
+        const weightInput = document.getElementById("weight");
+        const heightInput = document.getElementById("height");
+        const ageInput = document.getElementById("age");
+        const genderSelect = document.getElementById("gender");
 
-      const weight = parseFloat(weightInput.value);
-      const height = parseFloat(heightInput.value);
-      const age = parseInt(ageInput.value);
-      const gender = genderSelect.value;
+        const weight = parseFloat(weightInput.value);
+        const height = parseFloat(heightInput.value);
+        const age = parseInt(ageInput.value);
+        const gender = genderSelect.value;
 
-      if (isNaN(weight) || isNaN(height) || isNaN(age)) {
-        alert("Please enter valid values for weight, height, and age.");
-        return;
-      }
+        if (isNaN(weight) || isNaN(height) || isNaN(age)) {
+          alert("Please enter valid values for weight, height, and age.");
+          return;
+        }
 
-      const bmi = calculateBMI(weight, height);
-      const category = calculateBMICategory(bmi, height, weight, age, gender);
+        const bmi = calculateBMI(weight, height);
+        const category = calculateBMICategory(bmi);
 
-      displayResults(bmi, category);
+        displayResults(bmi, category, height, weight);
 
-      if (bmiChart) {
-        bmiChart.data.datasets[0].data = [
-          bmi,
-          25 - bmi,
-          30 - bmi,
-          100 - 30
-        ];
-        bmiChart.update();
-      } else {
-        const ctx = document.getElementById("bmiChart").getContext("2d");
-        bmiChart = new Chart(ctx, {
-          type: "doughnut",
-          data: {
-            labels: ["BMI", "Normal weight", "Overweight", "Obese"],
-            datasets: [{
-              data: [
-                bmi,
-                25 - bmi,
-                30 - bmi,
-                100 - 30
-              ],
-              backgroundColor: ["#4caf50", "#ffeb3b", "#ff9800", "#f44336"]
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            tooltips: {
-              callbacks: {
-                label: function(tooltipItem, data) {
-                  const dataset = data.datasets[tooltipItem.datasetIndex];
-                  const currentValue = dataset.data[tooltipItem.index];
-                  const total = dataset.data.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-                  const percentage = ((currentValue / total) * 100).toFixed(1);
-                  return `${percentage}%`;
+        if (bmiChart) {
+          bmiChart.data.datasets[0].data = [
+            bmi,
+            18.5 - bmi,
+            24.9 - bmi,
+            30 - 24.9
+          ];
+          bmiChart.update();
+        } else {
+          const ctx = document.getElementById("bmiChart").getContext("2d");
+          bmiChart = new Chart(ctx, {
+            type: "doughnut",
+            data: {
+              labels: ["BMI", "Underweight", "Normal weight", "Obese"],
+              datasets: [{
+                data: [
+                  bmi,
+                  18.5 - bmi,
+                  24.9 - bmi,
+                  30 - 24.9
+                ],
+                backgroundColor: ["#4caf50", "#f44336", "#ffeb3b", "#ff9800"]
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              tooltips: {
+                callbacks: {
+                  label: function(tooltipItem, data) {
+                    const dataset = data.datasets[tooltipItem.datasetIndex];
+                    const currentValue = dataset.data[tooltipItem.index];
+                    const total = dataset.data.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+                    const percentage = ((currentValue / total) * 100).toFixed(2);
+                    if (tooltipItem.index === 0) {
+                      return `${data.labels[tooltipItem.index]}: ${currentValue} (${percentage}%)`;
+                    } else {
+                      return `${data.labels[tooltipItem.index]}: ${currentValue.toFixed(2)} (${percentage}%)`;
+                    }
+                  }
                 }
               }
             }
-          }
-        });
+          });
+        }
+      });
+
+      function calculateBMI(weight, height) {
+        const heightInMeter = height / 100;
+        return (weight / (heightInMeter * heightInMeter)).toFixed(2);
       }
-    });
 
-    function calculateBMI(weight, height) {
-      const heightInMeter = height / 100;
-      return (weight / (heightInMeter * heightInMeter)).toFixed(2);
-    }
-
-    function calculateBMICategory(bmi, height, weight, age, gender) {
-      // BMI category calculation logic here
-      let category = "";
-      // ... your code ...
-      return category;
-    }
-
-    function displayResults(bmi, category) {
-      const resultElement = document.getElementById("result");
-      const resultTable = document.createElement("table");
-      resultTable.classList.add("result-table");
-
-      const row1 = resultTable.insertRow();
-      const bmiCell = row1.insertCell();
-      bmiCell.innerHTML = `BMI = ${bmi}`;
-      bmiCell.colSpan = 2;
-
-      const row2 = resultTable.insertRow();
-      const categoryCell = row2.insertCell();
-      categoryCell.innerHTML = `Category: ${category}`;
-      categoryCell.colSpan = 2;
-
-      const row3 = resultTable.insertRow();
-      const healthyRangeCell = row3.insertCell();
-      healthyRangeCell.innerHTML = "Healthy BMI range:";
-      const healthyRangeValueCell = row3.insertCell();
-      healthyRangeValueCell.innerHTML = "Your healthy range value";
-
-      const row4 = resultTable.insertRow();
-      const healthyWeightCell = row4.insertCell();
-      healthyWeightCell.innerHTML = "Healthy weight for the height:";
-      const healthyWeightValueCell = row4.insertCell();
-      healthyWeightValueCell.innerHTML = "Your healthy weight value";
-
-      const row5 = resultTable.insertRow();
-      const bmiPrimeCell = row5.insertCell();
-      bmiPrimeCell.innerHTML = "BMI Prime:";
-      const bmiPrimeValueCell = row5.insertCell();
-      bmiPrimeValueCell.innerHTML = "Your BMI prime value";
-
-      const row6 = resultTable.insertRow();
-      const ponderalIndexCell = row6.insertCell();
-      ponderalIndexCell.innerHTML = "Ponderal Index:";
-      const ponderalIndexValueCell = row6.insertCell();
-      ponderalIndexValueCell.innerHTML = "Your ponderal index value";
-
-      resultElement.innerHTML = "";
-      resultElement.appendChild(resultTable);
-    }
-
-    function resetForm() {
-      document.getElementById("bmiForm").reset();
-      document.getElementById("result").innerHTML = "";
-      if (bmiChart) {
-        bmiChart.destroy();
-        bmiChart = null;
+      function calculateBMICategory(bmi) {
+        if (bmi < 18.5) {
+          return "Underweight";
+        } else if (bmi >= 18.5 && bmi < 25) {
+          return "Normal weight";
+        } else if (bmi >= 25 && bmi < 30) {
+          return "Overweight";
+        } else {
+          return "Obese";
+        }
       }
-    }
-  </script>
+
+      function displayResults(bmi, category, height, weight) {
+        const resultElement = document.getElementById("result");
+        const resultTable = document.createElement("table");
+        resultTable.classList.add("result-table");
+
+        const row1 = resultTable.insertRow();
+        const bmiCell = row1.insertCell();
+        bmiCell.innerHTML = `BMI = ${bmi}`;
+        bmiCell.colSpan = 2;
+
+        const row2 = resultTable.insertRow();
+        const categoryCell = row2.insertCell();
+        categoryCell.innerHTML = `Category: ${category}`;
+        categoryCell.colSpan = 2;
+
+        const row3 = resultTable.insertRow();
+        const healthyRangeCell = row3.insertCell();
+        healthyRangeCell.innerHTML = "Healthy BMI range:";
+        const healthyRangeValueCell = row3.insertCell();
+        healthyRangeValueCell.innerHTML = getHealthyRange(height);
+
+        const row4 = resultTable.insertRow();
+        const healthyWeightCell = row4.insertCell();
+        healthyWeightCell.innerHTML = "Healthy weight for the height:";
+        const healthyWeightValueCell = row4.insertCell();
+        healthyWeightValueCell.innerHTML = getHealthyWeight(height);
+
+        const row5 = resultTable.insertRow();
+        const bmiPrimeCell = row5.insertCell();
+        bmiPrimeCell.innerHTML = "BMI Prime:";
+        const bmiPrimeValueCell = row5.insertCell();
+        bmiPrimeValueCell.innerHTML = getBMIPrime(bmi);
+
+        const row6 = resultTable.insertRow();
+        const ponderalIndexCell = row6.insertCell();
+        ponderalIndexCell.innerHTML = "Ponderal Index:";
+        const ponderalIndexValueCell = row6.insertCell();
+        ponderalIndexValueCell.innerHTML = getPonderalIndex(height, weight);
+
+        const row7 = resultTable.insertRow();
+        const underweightCell = row7.insertCell();
+        underweightCell.innerHTML = "Underweight:";
+        const underweightValueCell = row7.insertCell();
+        underweightValueCell.innerHTML = getWeightCategory(height, 18.5);
+
+        const row8 = resultTable.insertRow();
+        const normalWeightCell = row8.insertCell();
+        normalWeightCell.innerHTML = "Normal weight:";
+        const normalWeightValueCell = row8.insertCell();
+        normalWeightValueCell.innerHTML = getWeightCategory(height, 18.5, 24.9);
+
+        const row9 = resultTable.insertRow();
+        const overweightCell = row9.insertCell();
+        overweightCell.innerHTML = "Overweight:";
+        const overweightValueCell = row9.insertCell();
+        overweightValueCell.innerHTML = getWeightCategory(height, 25, 29.9);
+
+        const row10 = resultTable.insertRow();
+        const obeseCell = row10.insertCell();
+        obeseCell.innerHTML = "Obese:";
+        const obeseValueCell = row10.insertCell();
+        obeseValueCell.innerHTML = getWeightCategory(height, 30);
+
+        resultElement.innerHTML = "";
+        resultElement.appendChild(resultTable);
+      }
+
+      function getHealthyRange(height) {
+        const minWeight = calculateBMI(18.5, height) * (height / 100) ** 2;
+        const maxWeight = calculateBMI(24.9, height) * (height / 100) ** 2;
+        return `${minWeight.toFixed(2)} kg - ${maxWeight.toFixed(2)} kg`;
+      }
+
+      function getHealthyWeight(height) {
+        const minWeight = calculateBMI(18.5, height) * (height / 100) ** 2;
+        const maxWeight = calculateBMI(24.9, height) * (height / 100) ** 2;
+        return `${minWeight.toFixed(2)} kg - ${maxWeight.toFixed(2)} kg`;
+      }
+
+      function getBMIPrime(bmi) {
+        return (bmi / 25).toFixed(2);
+      }
+
+      function getPonderalIndex(height, weight) {
+        const heightInMeter = height / 100;
+        return (weight / (heightInMeter ** 3)).toFixed(2);
+      }
+
+      function getWeightCategory(height, minBMI, maxBMI = Infinity) {
+        const minWeight = calculateBMI(minBMI, height) * (height / 100) ** 2;
+        const maxWeight = calculateBMI(maxBMI, height) * (height / 100) ** 2;
+        return `${minWeight.toFixed(2)} kg - ${maxWeight.toFixed(2)} kg`;
+      }
+
+      function resetForm() {
+        document.getElementById("bmiForm").reset();
+        document.getElementById("result").innerHTML = "";
+        if (bmiChart) {
+          bmiChart.destroy();
+          bmiChart = null;
+        }
+      }
+    </script>
+  </div>
 </body>
 </html>
-
