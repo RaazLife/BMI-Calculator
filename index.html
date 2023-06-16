@@ -1,1 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BMI Calculator</title>
+  <style>
+    /* Styles for the container, form, and other elements */
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f4f4f4;
+      border-radius: 5px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button[type="submit"] {
+      padding: 10px 15px;
+      background-color: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #result {
+      margin-bottom: 20px;
+    }
+
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .result-table th,
+    .result-table td {
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin-top: 20px;
+    }
+
+    .chart-metric {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .chart-metric-value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .chart-metric-label {
+      font-size: 14px;
+      color: #888;
+    }
+
+    .chart-arrow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px;
+      height: 80px;
+      background-color: #888;
+      border-radius: 5px;
+      z-index: -1;
+    }
+
+    .chart-arrow::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      width: 30px;
+      height: 30px;
+      background-color: #888;
+      transform: rotate(45deg);
+      border-radius: 5px;
+    }
+
+    .reset-button {
+      padding: 10px 15px;
+      background-color: #f44336;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>BMI Calculator</h1>
+
+    <form id="bmiForm">
+      <div class="form-group">
+        <label for="weight">Weight (kg):</label>
+        <input type="number" id="weight" required>
+      </div>
+      <div class="form-group">
+        <label for="height">Height (cm):</label>
+        <input type="number" id="height" required>
+      </div>
+      <div class="form-group">
+        <label for="age">Age:</label>
+        <input type="number" id="age" required>
+      </div>
+      <div class="form-group">
+        <label for="gender">Gender:</label>
+        <select id="gender" required>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </div>
+      <button type="submit">Calculate</button>
+      <button type="button" class="reset-button" onclick="resetForm()">Reset</button>
+    </form>
+
+    <div id="result"></div>
+    <div class="chart-container">
+      <canvas id="bmiChart"></canvas>
+      <div class="chart-metric">
+        <span class="chart-metric-value">-</span>
+        <span class="chart-metric-label">BMI</span>
+        <div class="chart-arrow"></div>
+      </div>
+    </div>
+
+    <div>
+      <h2>BMI Categories</h2>
+      <ul>
+        <li>Underweight: &lt; 18.5</li>
+        <li>Normal weight: 18.5 - 24.9</li>
+        <li>Overweight: 25 - 29.9</li>
+        <li>Obese: &gt;= 30</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    let bmiChart = null;
+
+    document.getElementById("bmiForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const weightInput = document.getElementById("weight");
+      const heightInput = document.getElementById("height");
+      const ageInput = document.getElementById("age");
+      const genderSelect = document.getElementById("gender");
+
+      const weight = parseFloat(weightInput.value);
+      const height = parseFloat(heightInput.value);
+      const age = parseInt(ageInput.value);
+      const gender = genderSelect.value;
+
+      if (isNaN(weight) || isNaN(height) || isNaN(age)) {
+        alert("Please enter valid values for weight, height, and age.");
+        return;
+      }
+
+      const bmi = calculateBMI(weight, height);
+      const category = calculateBMICategory(bmi, height, weight, age, gender);
+
+      displayResults(bmi, category);
+
+      if (bmiChart) {
+        bmiChart.data.datasets[0].data = [
+          bmi,
+          25 - bmi,
+          30 - bmi,
+          100 - 30
+        ];
+        bmiChart.update();
+      } else {
+        const ctx = document.getElementById("bmiChart").getContext("2d");
+        bmiChart = new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: ["BMI", "Normal weight", "Overweight", "Obese"],
+            datasets: [{
+              data: [
+                bmi,
+                25 - bmi,
+                30 - bmi,
+                100 - 30
+              ],
+              backgroundColor: ["#4caf50", "#ffeb3b", "#ff9800", "#f44336"]
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            tooltips: {
+              callbacks: {
+                label: function(tooltipItem, data) {
+                  const dataset = data.datasets[tooltipItem.datasetIndex];
+                  const currentValue = dataset.data[tooltipItem.index];
+                  const total = dataset.data.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+                  const percentage = ((currentValue / total) * 100).toFixed(1);
+                  return `${percentage}%`;
+                }
+              }
+            }
+          }
+        });
+      }
+    });
+
+    function calculateBMI(weight, height) {
+      const heightInMeter = height / 100;
+      return (weight / (heightInMeter * heightInMeter)).toFixed(2);
+    }
+
+    function calculateBMICategory(bmi, height, weight, age, gender) {
+      // BMI category calculation logic here
+      let category = "";
+      // ... your code ...
+      return category;
+    }
+
+    function displayResults(bmi, category) {
+      const resultElement = document.getElementById("result");
+      const resultTable = document.createElement("table");
+      resultTable.classList.add("result-table");
+
+      const row1 = resultTable.insertRow();
+      const bmiCell = row1.insertCell();
+      bmiCell.innerHTML = `BMI = ${bmi}`;
+      bmiCell.colSpan = 2;
+
+      const row2 = resultTable.insertRow();
+      const categoryCell = row2.insertCell();
+      categoryCell.innerHTML = `Category: ${category}`;
+      categoryCell.colSpan = 2;
+
+      const row3 = resultTable.insertRow();
+      const healthyRangeCell = row3.insertCell();
+      healthyRangeCell.innerHTML = "Healthy BMI range:";
+      const healthyRangeValueCell = row3.insertCell();
+      healthyRangeValueCell.innerHTML = "Your healthy range value";
+
+      const row4 = resultTable.insertRow();
+      const healthyWeightCell = row4.insertCell();
+      healthyWeightCell.innerHTML = "Healthy weight for the height:";
+      const healthyWeightValueCell = row4.insertCell();
+      healthyWeightValueCell.innerHTML = "Your healthy weight value";
+
+      const row5 = resultTable.insertRow();
+      const bmiPrimeCell = row5.insertCell();
+      bmiPrimeCell.innerHTML = "BMI Prime:";
+      const bmiPrimeValueCell = row5.insertCell();
+      bmiPrimeValueCell.innerHTML = "Your BMI prime value";
+
+      const row6 = resultTable.insertRow();
+      const ponderalIndexCell = row6.insertCell();
+      ponderalIndexCell.innerHTML = "Ponderal Index:";
+      const ponderalIndexValueCell = row6.insertCell();
+      ponderalIndexValueCell.innerHTML = "Your ponderal index value";
+
+      resultElement.innerHTML = "";
+      resultElement.appendChild(resultTable);
+    }
+
+    function resetForm() {
+      document.getElementById("bmiForm").reset();
+      document.getElementById("result").innerHTML = "";
+      if (bmiChart) {
+        bmiChart.destroy();
+        bmiChart = null;
+      }
+    }
+  </script>
+</body>
+</html>
 
